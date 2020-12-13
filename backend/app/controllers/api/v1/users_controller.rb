@@ -1,46 +1,53 @@
 module Api
   module V1
     class UsersController < ProtectedController
-      jwt_authenticate
+      jwt_authenticate except: :login
 
       def index
         users = User.order(created_at: :desc).limit(20)
-        render_ok(users)
+        render_ok(render_data: users)
       end
 
-      def show
-        render json: { status: 'SUCCESS', message: 'Loaded the user', data: @user }
+      def profile
+        render_ok(render_data: @current_user)
       end
 
-      def create
-        user = Post.create(user_params)
-        if post.save
-          render json: { status: 'SUCCESS', data: user }
-        else
-          render json: { status: 'ERROR', data: user.errors }
-        end
-      end
-
-      def update
-        if @user.update(user_params)
-          render json: { status: 'SUCCESS', message: 'Updated the user', data: @user }
-        else
-          render json: { status: 'SUCCESS', message: 'Not updated', data: @user.errors }
-        end
+      def login
+        @current_user = User.find_by_username(params[:username])
+        token
       end
 
       def follow
-        @user.active_relationships.create(followed_id: params[:other_user_id])
+        @current_user.active_relationships.find_or_create_by(followed_id: params[:other_user_id])
+        render_ok
       end
 
       def unfollow
-        @user.active_relationships.find_by(followed_id: params[:other_user_id]).destroy
+        @current_user.active_relationships.find_by(followed_id: params[:other_user_id]).destroy
+        render_ok
+      end
+
+      def followers
+        render_ok(render_data: @current_user.followers.order(created_at: :desc).limit(20))
+      end
+
+      def following
+        render_ok(render_data: @current_user.following.order(created_at: :desc).limit(20))
       end
 
       private
 
-      def current_user
-        @user = User.find_by_username('kirito')
+      def token
+        raise Unauthenticated, 'error username or password' unless @current_user&.authenticate(params[:password])
+
+        jwt_token = encode(@current_user.username)
+        response.headers['X-Authentication-Token'] = jwt_token
+        @current_user = self_serialize(@current_user)
+        render_ok(render_data: @current_user)
+      end
+
+      def self_serialize(user)
+        user.serializable_hash(except: %w[password_digest created_at updated_at])
       end
 
       def user_params
