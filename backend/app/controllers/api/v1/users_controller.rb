@@ -2,14 +2,17 @@ module Api
   module V1
     class UsersController < ProtectedController
       jwt_authenticate except: :login
+      before_initialize
+      after_serialize
 
       def index
-        users = User.order(created_at: :desc).limit(20)
-        render_ok(render_data: users)
+        @data << User.order(created_at: :desc).limit(20)
+        render_ok @data
       end
 
       def profile
-        render_ok(render_data: @current_user)
+        @data << @current_user
+        render_ok
       end
 
       def login
@@ -28,11 +31,13 @@ module Api
       end
 
       def followers
-        render_ok(render_data: @current_user.followers.order(created_at: :desc).limit(20))
+        @data << @current_user.followers.recent
+        render_ok
       end
 
       def following
-        render_ok(render_data: @current_user.following.order(created_at: :desc).limit(20))
+        @current_user.following.recent.each { |item| @data << item }
+        render_ok
       end
 
       private
@@ -42,12 +47,8 @@ module Api
 
         jwt_token = encode(@current_user.username)
         response.headers['X-Authentication-Token'] = jwt_token
-        @current_user = self_serialize(@current_user)
-        render_ok(render_data: @current_user)
-      end
-
-      def self_serialize(user)
-        user.serializable_hash(except: %w[password_digest created_at updated_at])
+        @data << @current_user
+        render_ok @data
       end
 
       def user_params
