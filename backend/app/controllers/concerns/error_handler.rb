@@ -5,16 +5,16 @@ module ErrorHandler
 
   included do
     rescue_from Exception, with: :handle_error
-    rescue_from Unauthenticated, with: :unauthenticated
+    rescue_from JWT::ExpiredSignature, JWT::VerificationError, JWT::DecodeError, Unauthenticated, with: :unauthenticated
 
     def unauthenticated(e)
       @exception = e
-      render json: { code: 401, message: @exception.message, data: nil, timestamp: Time.now }
+      head :unauthorized
+      # render json: { code: 401, message: @exception.message, data: nil, timestamp: Time.now }
     end
 
     def handle_error(e)
       @exception = e
-      p @exception.message
       render_error @exception.message
     end
   end

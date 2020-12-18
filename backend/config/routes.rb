@@ -1,13 +1,17 @@
 Rails.application.routes.draw do
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
+      # authentication api
+      post 'login', to: 'authentication#login'
+
       # users api
-      post 'login', to: 'users#login'
       get 'profile', to: 'users#profile'
-      post 'follow/:other_user_id', to: 'users#follow'
-      post 'unfollow/:other_user_id', to: 'users#unfollow'
-      get 'followers', to: 'users#followers'
-      get 'following', to: 'users#following'
+
+      # follows api
+      post 'follow/:other_user_id', to: 'follows#follow'
+      post 'unfollow/:other_user_id', to: 'follows#unfollow'
+      get 'followers', to: 'follows#followers'
+      get 'following', to: 'follows#following'
     end
   end
 end

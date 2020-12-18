@@ -8,7 +8,7 @@ module JwtAuthenticator
   module ClassMethods
     def jwt_authenticate(**options)
       class_eval do
-        prepend_before_action :jwt_authenticate!, options
+        before_action :jwt_authenticate!, options
       end
     end
   end
