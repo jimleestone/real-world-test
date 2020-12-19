@@ -22,6 +22,18 @@ export class DataService {
   public next: string = '';
   public last: string = '';
 
+  public sendGetRequestToUrl(url: string) {
+    return this.httpClient
+      .get<Product[]>(url, { observe: 'response' })
+      .pipe(
+        retry(3),
+        catchError(this.handleError),
+        tap((res) => {
+          this.parseLinkHeader(res.headers.get('Link'));
+        })
+      );
+  }
+
   public sendGetRequest() {
     return this.httpClient
       .get<Product[]>(this.REST_API_SERVER, {
@@ -32,7 +44,6 @@ export class DataService {
         retry(3),
         catchError(this.handleError),
         tap((res) => {
-          console.log(res.headers.get('Link'));
           this.parseLinkHeader(res.headers.get('Link'));
         })
       );
@@ -44,7 +55,7 @@ export class DataService {
     }
 
     let parts = header.split(',');
-    let links: Object = {};
+    let links = {};
     parts.forEach((p) => {
       let section = p.split(';');
       let url = section[0].replace(/<(.*)>/, '$1').trim();
