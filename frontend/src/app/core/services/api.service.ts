@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment';
 import { HttpHeaders, HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-
 import { catchError } from 'rxjs/operators';
 
-@Injectable()
+import { JwtService } from './jwt.service';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root',
+})
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private jwtService: JwtService) {}
 
   private formatErrors(error: any) {
     return throwError(error.error);
@@ -31,7 +34,7 @@ export class ApiService {
       .pipe(catchError(this.formatErrors));
   }
 
-  delete(path): Observable<any> {
+  delete(path: string): Observable<any> {
     return this.http
       .delete(`${environment.api_url}${path}`)
       .pipe(catchError(this.formatErrors));

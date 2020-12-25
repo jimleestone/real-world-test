@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, ReplaySubject } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import { ApiService } from './api.service';
 import { JwtService } from './jwt.service';
-import { User } from '../models';
-import { map, distinctUntilChanged } from 'rxjs/operators';
+import { User } from '../models/user';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class UserService {
   private currentUserSubject = new BehaviorSubject<User>({} as User);
   public currentUser = this.currentUserSubject
@@ -56,7 +58,7 @@ export class UserService {
     this.isAuthenticatedSubject.next(false);
   }
 
-  attemptAuth(type: string, credentials: string): Observable<User> {
+  attemptAuth(type, credentials): Observable<User> {
     const route = type === 'login' ? '/login' : '';
     return this.apiService.post('/users' + route, { user: credentials }).pipe(
       map((data) => {
